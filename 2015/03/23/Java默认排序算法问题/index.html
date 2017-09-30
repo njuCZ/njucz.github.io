@@ -1,0 +1,416 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Java默认排序算法问题 | njuCZ&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="njuCZ">
+    
+    <meta name="description" content="前言虽然学习Java已经有3、4年时间了，不过一直没有想过要看jdk的源码，导致面试官问Java默认排序算法的实现时只能吞吞吐吐，颇为难堪。遂将相关的知识整理下，警醒自我。注：本文是依据 jdk 1.7 的源码进行说明
+java 默认排序算法的实现打开java.util包中的Arrays类文件，我们">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="njuCZ&#39;s blog" title="njuCZ&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="njuCZ&#39;s blog">njuCZ&#39;s blog</a></h1>
+				<h2 class="blog-motto">Walk steps step by step</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:njucz.github.io">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/03/23/Java默认排序算法问题/" title="Java默认排序算法问题" itemprop="url">Java默认排序算法问题</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://njucz.github.io" title="njuCZ">njuCZ</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-03-23T06:26:24.000Z" itemprop="datePublished">Mar 23 2015</time>
+    更新日期:<time datetime="2017-09-19T10:38:12.739Z" itemprop="dateModified">Sep 19 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#java-默认排序算法的实现"><span class="toc-number">2.</span> <span class="toc-text">java 默认排序算法的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#java-基本类型的排序"><span class="toc-number">2.1.</span> <span class="toc-text">java 基本类型的排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#java-对象类型的排序-老版本"><span class="toc-number">2.2.</span> <span class="toc-text">java 对象类型的排序(老版本)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#java-对象类型的排序-新版本"><span class="toc-number">2.3.</span> <span class="toc-text">java 对象类型的排序(新版本)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#JDK-1-7-中更换排序算法后可能引发的问题"><span class="toc-number">2.3.1.</span> <span class="toc-text">JDK 1.7 中更换排序算法后可能引发的问题</span></a></li></ol></li></ol></li></ol>
+		</div>
+		
+		<h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>虽然学习Java已经有3、4年时间了，不过一直没有想过要看jdk的源码，导致面试官问Java默认排序算法的实现时只能吞吞吐吐，颇为难堪。遂将相关的知识整理下，警醒自我。<br>注：本文是依据 jdk 1.7 的源码进行说明</p>
+<h1 id="java-默认排序算法的实现"><a href="#java-默认排序算法的实现" class="headerlink" title="java 默认排序算法的实现"></a>java 默认排序算法的实现</h1><p>打开java.util包中的Arrays类文件，我们可以看到其sort方法主要是分以下三种情况分别进行实现 </p>
+<h2 id="java-基本类型的排序"><a href="#java-基本类型的排序" class="headerlink" title="java 基本类型的排序"></a>java 基本类型的排序</h2><p>在Arrays类中使用方法重载提供了对int、long、short、char、byte、float、double型数组的排序，其实现都是通过调用DualPivotQuicksort.sort()方法。在DualPivotQuicksort类中，我们可以看到如下代码：</p>
+<pre><code>/**
+ * If the length of an array to be sorted is less than this
+ * constant, Quicksort is used in preference to merge sort.
+ */
+private static final int QUICKSORT_THRESHOLD = 286;
+
+/**
+ * If the length of an array to be sorted is less than this
+ * constant, insertion sort is used in preference to Quicksort.
+ */
+private static final int INSERTION_SORT_THRESHOLD = 47;
+</code></pre><p>其含义即为若排序的数组个数超过QUICKSORT_THRESHOLD，那么就使用merge sort；个数位于QUICKSORT_THRESHOLD和INSERTION_SORT_THRESHOLD之间就使用Quicksort；个数少于INSERTION_SORT_THRESHOLD那么就使用插入排序。</p>
+<p>下面我们以int类型数组的排序简单介绍下其源码，并验证上述的论述（源文件107行 ~ 191行）。</p>
+<p>首先程序判断排序的个数是否超过QUICKSORT_THRESHOLD</p>
+<pre><code>if (right - left &lt; QUICKSORT_THRESHOLD) {
+    sort(a, left, right, true);     // Use Quicksort on small arrays
+    return;
+}
+</code></pre><p>然后程序试图用MAX_RUN_COUNT数量个run数组，去将待排序数组划分成一个个递增的序列（即从前到后寻找递增或递减的序列，并将递减的序列排序成递增的，然后在run数组中保存临界下标值）。如果发现序列的个数超过MAX_RUN_COUNT,就表示待排序的数组是高度不规则化的，那么程序还是会使用快排去进行排序。</p>
+<pre><code>// Check if the array is nearly sorted
+for (int k = left; k &lt; right; run[count] = k) {
+    if (a[k] &lt; a[k + 1]) { // ascending
+        while (++k &lt;= right &amp;&amp; a[k - 1] &lt;= a[k]);
+    } else if (a[k] &gt; a[k + 1]) { // descending
+        while (++k &lt;= right &amp;&amp; a[k - 1] &gt;= a[k]);
+        for (int lo = run[count] - 1, hi = k; ++lo &lt; --hi; ) {
+            int t = a[lo]; a[lo] = a[hi]; a[hi] = t;
+        }
+    } else { // equal
+        for (int m = MAX_RUN_LENGTH; ++k &lt;= right &amp;&amp; a[k - 1] == a[k]; ) {
+            if (--m == 0) {
+                sort(a, left, right, true);
+                return;
+            }
+        }
+    }
+
+    /*
+     * The array is not highly structured,
+     * use Quicksort instead of merge sort.
+     */
+    if (++count == MAX_RUN_COUNT) {
+        sort(a, left, right, true);
+        return;
+    }
+}
+</code></pre><p>若经过上述的步骤发现待排序的数组不是高度不规则化的，那么就会进行merge排序（之前已经将带排序数组分成了一个个小的递增序列，所以此时只需进行merge操作就可以）。</p>
+<p>上述判断了程序是使用Quicksort还是merge sort，而在quicksort的实现中又针对小数目的数组进行插入排序进行了优化。</p>
+<h2 id="java-对象类型的排序-老版本"><a href="#java-对象类型的排序-老版本" class="headerlink" title="java 对象类型的排序(老版本)"></a>java 对象类型的排序(老版本)</h2><p>在jdk 1.6及以前的版本中，对于object类型的数组默认是使用merge sort，而在jdk 1.7中将其替换为下文将要介绍的Timsort，但是于此同时，为了保留jdk的兼容性，merge sort的实现并没有被立即删掉，不过已经注明在未来的版本中将被移除。</p>
+<p>如今，为了使用jdk 1.6的排序算法，需要在启动参数中（例如eclipse.ini）添加-Djava.util.Arrays.useLegacyMergeSort=true。这可以通过Arrays.java中的下述语句来理解。</p>
+<pre><code>/**
+ * Old merge sort implementation can be selected (for
+ * compatibility with broken comparators) using a system property.
+ * Cannot be a static boolean in the enclosing class due to
+ * circular dependencies. To be removed in a future release.
+ */
+static final class LegacyMergeSort {
+    private static final boolean userRequested =
+        java.security.AccessController.doPrivileged(
+            new sun.security.action.GetBooleanAction(
+                &quot;java.util.Arrays.useLegacyMergeSort&quot;)).booleanValue();
+}
+
+public static void sort(Object[] a) {
+    if (LegacyMergeSort.userRequested)
+        legacyMergeSort(a);
+    else
+        ComparableTimSort.sort(a);
+}
+</code></pre><p>通过上述代码可知，旧版本的对象数组排序是通过legacyMergeSort()方法进行实现的。而这个方法内部则是通过merge sort处理大量对象和插入排序处理少量对象完成的。具体可以阅读源码或参考文章<a href="http://jiangshuiy.iteye.com/blog/1449935" target="_blank" rel="external">java类库中Arrays的排序算法探析（Object与泛型类型）</a></p>
+<h2 id="java-对象类型的排序-新版本"><a href="#java-对象类型的排序-新版本" class="headerlink" title="java 对象类型的排序(新版本)"></a>java 对象类型的排序(新版本)</h2><p>通过上一节的说明，我们知道目前java对于对象的默认排序是使用名为timsort的算法。timsort算法的基本思想和老版本的还是一致的，即将归并排序和插入排序结合，并进行了优化。但其基本思想是将待排序数组划分成一个个递增的run序列（将递减的排序成递增的，即递增子序列或递减子序列为一个run），并对run序列进行合并，该合并方法名为binarySort，即采用的是binary search的方式查找插入位置。由于待排序数组可能会产生很多的run序列，程序中会采用一个栈来保存所有的run序列，并在条件满足时进行run序列的合并。</p>
+<p>针对timsort具体的实现及说明可以参考文章<a href="http://blog.csdn.net/on_1y/article/details/30109975" target="_blank" rel="external">OpenJDK 源代码阅读之 TimSort</a>以及<a href="http://en.wikipedia.org/wiki/Timsort" target="_blank" rel="external">Timsort Wiki</a></p>
+<h3 id="JDK-1-7-中更换排序算法后可能引发的问题"><a href="#JDK-1-7-中更换排序算法后可能引发的问题" class="headerlink" title="JDK 1.7 中更换排序算法后可能引发的问题"></a>JDK 1.7 中更换排序算法后可能引发的问题</h3><p>使用新版本的jdk排序算法可能会遇到如下的异常：</p>
+<pre><code>Exception in thread &quot;main&quot; java.lang.IllegalArgumentException: Comparison method violates its general contract!
+</code></pre><p>这是因为Timsort对对象间比较的实现要求更加严格，其Comparator的实现必须保证以下几点：</p>
+<ol>
+<li>sgn(compare(x, y)) == -sgn(compare(y, x)) </li>
+<li>(compare(x, y)&gt;0) &amp;&amp; (compare(y, z)&gt;0) 意味着 compare(x, z)&gt;0 </li>
+<li>compare(x, y)==0 意味着对于任意的z：sgn(compare(x, z))==sgn(compare(y, z)) 均成立</li>
+</ol>
+<p>而我们的代码中，某个compare()实现片段是这样的：</p>
+<pre><code>public int compare(ComparatorTest o1, ComparatorTest o2) { 
+    return o1.getValue() &gt; o2.getValue() ? 1 : -1; 
+}
+</code></pre><p>这就违背了a)原则：假设X的value为1，Y的value也为1；那么compare(X, Y) ≠ –compare(Y, X)<br>PS: TimSort不仅内置在各种JDK 7的版本，也存在于Android SDK中（尽管其并没有使用JDK 7）。</p>
+<p>因为常见的解决方案就是如下三种：</p>
+<ol>
+<li><p>更改内部实现：例如对于上个例子，就需要更改为</p>
+<pre><code>public int compare(ComparatorTest o1, ComparatorTest o2) { 
+    return o1.getValue() == o2.getValue() ? 0 :  
+            (o1.getValue() &gt; o2.getValue() ? 1 : -1); 
+}
+</code></pre></li>
+<li><p>Java 7预留了一个接口以便于用户继续使用Java 6的排序算法：在启动参数中（例如eclipse.ini）添加-Djava.util.Arrays.useLegacyMergeSort=true</p>
+</li>
+<li><p>将这个IllegalArgumentException手动捕获住（不推荐）</p>
+</li>
+</ol>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/java/">java</a><a href="/tags/jdk/">jdk</a><a href="/tags/sort/">sort</a>
+  </div>
+
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://njucz.github.io/2015/03/23/Java默认排序算法问题/" data-title="Java默认排序算法问题 | njuCZ&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/09/20/tiny-spring源码阅读笔记/" title="tiny-spring源码阅读笔记">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  tiny-spring源码阅读笔记</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/03/16/查阅jdk源码/"  title="查阅jdk源码">
+ <strong>NEXT:</strong><br/> 
+ <span>查阅jdk源码
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#前言"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#java-默认排序算法的实现"><span class="toc-number">2.</span> <span class="toc-text">java 默认排序算法的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#java-基本类型的排序"><span class="toc-number">2.1.</span> <span class="toc-text">java 基本类型的排序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#java-对象类型的排序-老版本"><span class="toc-number">2.2.</span> <span class="toc-text">java 对象类型的排序(老版本)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#java-对象类型的排序-新版本"><span class="toc-number">2.3.</span> <span class="toc-text">java 对象类型的排序(新版本)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#JDK-1-7-中更换排序算法后可能引发的问题"><span class="toc-number">2.3.1.</span> <span class="toc-text">JDK 1.7 中更换排序算法后可能引发的问题</span></a></li></ol></li></ol></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/API-versioning/" title="API versioning">API versioning<sup>1</sup></a></li>
+		
+			<li><a href="/tags/django/" title="django">django<sup>1</sup></a></li>
+		
+			<li><a href="/tags/github/" title="github">github<sup>1</sup></a></li>
+		
+			<li><a href="/tags/hexo/" title="hexo">hexo<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>3</sup></a></li>
+		
+			<li><a href="/tags/jdk/" title="jdk">jdk<sup>2</sup></a></li>
+		
+			<li><a href="/tags/sort/" title="sort">sort<sup>1</sup></a></li>
+		
+			<li><a href="/tags/spring/" title="spring">spring<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2017 
+		
+		<a href="http://njucz.github.io" target="_blank" title="njuCZ">njuCZ</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,329 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>Django API 版本控制 | njuCZ&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="njuCZ">
+    
+    <meta name="description" content="在做后台系统时，我们一般希望API变动越少，这样对调用者比较方便有利；另一方面，由于软件变化的不可预测性，系统在发展的过程中，不可避免的需要添加新的资源、或者修改现有资源，改动升级是难以避免的。因此API的设计需要考虑版本控制策略。通常而言，API的版本控制策略通常有3种模式：第一种是平台的API永">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="njuCZ&#39;s blog" title="njuCZ&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="njuCZ&#39;s blog">njuCZ&#39;s blog</a></h1>
+				<h2 class="blog-motto">Walk steps step by step</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:njucz.github.io">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/03/09/Django-API-版本控制/" title="Django API 版本控制" itemprop="url">Django API 版本控制</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://njucz.github.io" title="njuCZ">njuCZ</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-03-09T03:15:08.000Z" itemprop="datePublished">Mar 9 2015</time>
+    更新日期:<time datetime="2017-09-20T10:27:23.000Z" itemprop="dateModified">Sep 20 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#版本控制的方式"><span class="toc-number">1.</span> <span class="toc-text">版本控制的方式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#方法一：利用URL"><span class="toc-number">1.1.</span> <span class="toc-text">方法一：利用URL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法二：利用用户自定义的request-header"><span class="toc-number">1.2.</span> <span class="toc-text">方法二：利用用户自定义的request header</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法三：利用content-type"><span class="toc-number">1.3.</span> <span class="toc-text">方法三：利用content type</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法四：利用content-type"><span class="toc-number">1.4.</span> <span class="toc-text">方法四：利用content type</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法五：利用URL里的parameter"><span class="toc-number">1.5.</span> <span class="toc-text">方法五：利用URL里的parameter</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Django-API-Versioning"><span class="toc-number">2.</span> <span class="toc-text">Django API Versioning</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#project-urls-py"><span class="toc-number">2.1.</span> <span class="toc-text">project urls.py:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#api-app-level-urls-py"><span class="toc-number">2.2.</span> <span class="toc-text">api app level urls.py:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#version-level-urls-py"><span class="toc-number">2.3.</span> <span class="toc-text">version level urls.py</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考文章"><span class="toc-number">3.</span> <span class="toc-text">参考文章</span></a></li></ol>
+		</div>
+		
+		<p>在做后台系统时，我们一般希望API变动越少，这样对调用者比较方便有利；另一方面，由于软件变化的不可预测性，系统在发展的过程中，不可避免的需要添加新的资源、或者修改现有资源，改动升级是难以避免的。因此API的设计需要考虑版本控制策略。<br>通常而言，API的版本控制策略通常有3种模式：第一种是平台的API永远只有一个版本，所有的用户都必须使用最新的API，任何API的修改都会影响到平台所有的用户。第二种是平台的API版本自带版本号，用户根据自己的需求选择使用对应的API，需要使用新的API特性，用户必须自己升级。第三种是兼容性版本控制，平台只有一个版本，但是最新版本需要兼容以前版本的API行为。<br>要做到良好的API版本控制，需要兼容第二种和第三种模式，即提供一个统一的兼容版本入口，同时对于不能兼容历史版本的API保留历史版本，支持用户能够调用到历史版本的API。另外，对历史版本的API支持一定要有时间和用户限制，即老版API支持到一定时间就删除，新用户必须使用新版API，否则一个API有很多个版本会让平台的维护非常痛苦。</p>
+<h1 id="版本控制的方式"><a href="#版本控制的方式" class="headerlink" title="版本控制的方式"></a>版本控制的方式</h1><h2 id="方法一：利用URL"><a href="#方法一：利用URL" class="headerlink" title="方法一：利用URL"></a>方法一：利用URL</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">HTTP GET:</div><div class="line">https://haveibeenpwned.com/api/v2/breachedaccount/foo</div></pre></td></tr></table></figure>
+<h2 id="方法二：利用用户自定义的request-header"><a href="#方法二：利用用户自定义的request-header" class="headerlink" title="方法二：利用用户自定义的request header"></a>方法二：利用用户自定义的request header</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">HTTP GET:  </div><div class="line">https://haveibeenpwned.com/api/v2/breachedaccount/foo</div><div class="line">api-version: 2</div></pre></td></tr></table></figure>
+<h2 id="方法三：利用content-type"><a href="#方法三：利用content-type" class="headerlink" title="方法三：利用content type"></a>方法三：利用content type</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">HTTP GET:  </div><div class="line">https://haveibeenpwned.com/api/v2/breachedaccount/foo</div><div class="line">Accept: application/vnd.haveibeenpwned.v2+json</div></pre></td></tr></table></figure>
+<h2 id="方法四：利用content-type"><a href="#方法四：利用content-type" class="headerlink" title="方法四：利用content type"></a>方法四：利用content type</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">HTTP GET:  </div><div class="line">https://haveibeenpwned.com/api/v2/breachedaccount/foo</div><div class="line">Accept: application/vnd.haveibeenpwned+json; version=2.0</div></pre></td></tr></table></figure>
+<h2 id="方法五：利用URL里的parameter"><a href="#方法五：利用URL里的parameter" class="headerlink" title="方法五：利用URL里的parameter"></a>方法五：利用URL里的parameter</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">HTTP GET:  </div><div class="line">https://haveibeenpwned.com/api/v2/breachedaccount/foo</div><div class="line">Accept: application/vnd.haveibeenpwned+json; version=2.0</div></pre></td></tr></table></figure>
+<h1 id="Django-API-Versioning"><a href="#Django-API-Versioning" class="headerlink" title="Django API Versioning"></a>Django API Versioning</h1><p>以下会介绍使用django完成API版本化的方法，以达到以下的访问方式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">http://xxx.com/api/(resource)/</div><div class="line">http://xxx.com/api/v1/(resource)/</div></pre></td></tr></table></figure></p>
+<p>以及允许让客户端通过如下方式进行访问：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">http://xxx.com/api/(resource)/</div><div class="line">X-Version： 1</div></pre></td></tr></table></figure></p>
+<p>首先django 项目会有一个API 的 app，它的基本结构如下所示：<br><img src="/img/2_app_structure.png" alt=""></p>
+<h2 id="project-urls-py"><a href="#project-urls-py" class="headerlink" title="project urls.py:"></a>project urls.py:</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">url(r&apos;^api/&apos;, include(&apos;project.api.urls&apos;, namespace=&apos;api&apos;)),</div></pre></td></tr></table></figure>
+<h2 id="api-app-level-urls-py"><a href="#api-app-level-urls-py" class="headerlink" title="api app level urls.py:"></a>api app level urls.py:</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">url(r&apos;&apos;, include(&apos;api.v1.urls&apos;, namespace=&apos;default&apos;)),</div><div class="line">url(r&apos;^v2/&apos;, include(&apos;api.v2.urls&apos;, namespace=&apos;v2&apos;)),</div><div class="line">url(r&apos;^v1/&apos;, include(&apos;api.v1.urls&apos;, namespace=&apos;v1&apos;)),</div></pre></td></tr></table></figure>
+<h2 id="version-level-urls-py"><a href="#version-level-urls-py" class="headerlink" title="version level urls.py"></a>version level urls.py</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">url(r&apos;^hello/&apos;, &apos;api.v1.views.HelloWorld&apos;, name=&quot;HelloWorld&quot;),</div></pre></td></tr></table></figure>
+<p>创建个中间件，读取request中的header是否含有X_VERSION，若含有的话就改变请求的URL.<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">from django.core.urlresolvers import resolve</div><div class="line">from django.core.urlresolvers import reverse</div><div class="line">from project.settings import API_VERSION</div><div class="line">from django.http import Http404</div><div class="line"></div><div class="line">class VersionSwitch(object):</div><div class="line">    def process_request(self, request):</div><div class="line">        r = resolve(request.path_info)</div><div class="line">        version = request.META.get(&apos;HTTP_X_VERSION&apos;, False)</div><div class="line">        if r.namespace.startswith(&apos;api:&apos;) and version:</div><div class="line">            if int(version[1:]) &gt; API_VERSION:</div><div class="line">                raise Http404</div><div class="line">            old_version = r.namespace.split(&apos;:&apos;)[-1]</div><div class="line">            request.path_info = reverse(&apos;&#123;&#125;:&#123;&#125;&apos;.format(r.namespace.replace(old_version, version), r.url_name), args=r.args, kwargs=r.kwargs)</div></pre></td></tr></table></figure></p>
+<p>测试 URL<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">curl -H &quot;X-Version: v1&quot; http://xxx.com/api/hello/</div></pre></td></tr></table></figure></p>
+<h1 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h1><p><a href="http://ningandjiao.iteye.com/blog/1990004" target="_blank" rel="external">版本控制策略</a><br><a href="http://blog.csdn.net/hengyunabc/article/details/20506345" target="_blank" rel="external">Web API 版本控制的几种方式</a><br><a href="http://james.lin.net.nz/2014/02/18/django-rest-framework-api-versioning/" target="_blank" rel="external">django-rest-framework-api-versioning</a><br><a href="http://www.lexicalscope.com/blog/2012/03/12/how-are-rest-apis-versioned/" target="_blank" rel="external">API Version策略索引和公司使用情况</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/API-versioning/">API versioning</a><a href="/tags/django/">django</a>
+  </div>
+
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://njucz.github.io/2015/03/09/Django-API-版本控制/" data-title="Django API 版本控制 | njuCZ&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/03/16/查阅jdk源码/" title="查阅jdk源码">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  查阅jdk源码</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/01/27/使用Hexo搭建github博客/"  title="使用Hexo搭建Github博客">
+ <strong>NEXT:</strong><br/> 
+ <span>使用Hexo搭建Github博客
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#版本控制的方式"><span class="toc-number">1.</span> <span class="toc-text">版本控制的方式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#方法一：利用URL"><span class="toc-number">1.1.</span> <span class="toc-text">方法一：利用URL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法二：利用用户自定义的request-header"><span class="toc-number">1.2.</span> <span class="toc-text">方法二：利用用户自定义的request header</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法三：利用content-type"><span class="toc-number">1.3.</span> <span class="toc-text">方法三：利用content type</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法四：利用content-type"><span class="toc-number">1.4.</span> <span class="toc-text">方法四：利用content type</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#方法五：利用URL里的parameter"><span class="toc-number">1.5.</span> <span class="toc-text">方法五：利用URL里的parameter</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Django-API-Versioning"><span class="toc-number">2.</span> <span class="toc-text">Django API Versioning</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#project-urls-py"><span class="toc-number">2.1.</span> <span class="toc-text">project urls.py:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#api-app-level-urls-py"><span class="toc-number">2.2.</span> <span class="toc-text">api app level urls.py:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#version-level-urls-py"><span class="toc-number">2.3.</span> <span class="toc-text">version level urls.py</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考文章"><span class="toc-number">3.</span> <span class="toc-text">参考文章</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/API-versioning/" title="API versioning">API versioning<sup>1</sup></a></li>
+		
+			<li><a href="/tags/django/" title="django">django<sup>1</sup></a></li>
+		
+			<li><a href="/tags/github/" title="github">github<sup>1</sup></a></li>
+		
+			<li><a href="/tags/hexo/" title="hexo">hexo<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>3</sup></a></li>
+		
+			<li><a href="/tags/jdk/" title="jdk">jdk<sup>2</sup></a></li>
+		
+			<li><a href="/tags/sort/" title="sort">sort<sup>1</sup></a></li>
+		
+			<li><a href="/tags/spring/" title="spring">spring<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2017 
+		
+		<a href="http://njucz.github.io" target="_blank" title="njuCZ">njuCZ</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>
