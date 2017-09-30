@@ -55,7 +55,7 @@ X-Version： 1
 ```
 
 首先django 项目会有一个API 的 app，它的基本结构如下所示：
-![](/img/2_app_structure.PNG)
+![](/img/2_app_structure.png)
 
 ## project urls.py:
 ```
