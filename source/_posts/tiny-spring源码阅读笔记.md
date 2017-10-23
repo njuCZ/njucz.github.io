@@ -1,5 +1,5 @@
 title: tiny-spring源码阅读笔记
-date: 2017-09-20 18:08:45
+date: 2016-08-20 20:08:45
 tags: [java, spring]
 ---
 要阅读spring的源码，理解spring中的核心概念,比如ioc,aop的实现，比如ApplicationContext和AutowireCapableBeanFactory的具体职责，在未深入了解前总觉得很虚幻。要想具体了解它们的职责，同时避开spring庞杂的系统代码，可以推荐[tiny-spring](https://github.com/code4craft/tiny-spring)项目,该项目实现一个微型的spring，spring中最重要最基础的功能都包含在内，可以有效的帮助快速入门，理解spring的精髓。
@@ -12,13 +12,14 @@ tiny-spring项目把重要的一些历史版本都进行了tag管理。共分为
 
 > The objects that form the backbone of your application and that are managed by the Spring IoC container are called beans
 
-bean指的是任何通过spring管理生成的object，和普通的objetc的唯一区别便是是否由spring的容器所管理。在spring中，每个bean都是以BeanDefinition的形式存在的。大家都知道ioc的核心实现是通过反射完成的，要通过反射获得一个object，那么该object的class，该object的成员变量，以及引用该object的name都是必需的属性。所以大家可以看到BeanDefinition包含以下属性：
+bean指的是任何通过spring管理生成的object，和普通的object的唯一区别便是是否由spring的容器所管理。在spring中，每个bean都是以BeanDefinition的形式存在的。大家都知道ioc的核心实现是通过反射完成的，要通过反射获得一个object，那么该object的class，该object的成员变量，以及表示该object的name都是必需的属性。所以大家可以看到BeanDefinition包含以下属性：
 ```
 private Object bean;
 private Class beanClass;
 private String beanClassName;
 private PropertyValues propertyValues;
 ```
+BeanDefinition对象在创建时只需知道beanClass，beanClassName和propertyValues属性，根据这些属性创建对应的对象则是由工厂类负责创建.
 
 工厂类负责构造对象，所以会包含ConcurrentHashMap<String, BeanDefinition>，其中的key是BeanDefinition的beanClassName。子类AutowireCapableBeanFactory负责具体的创建bean的过程，即创建对象，注入属性。
 
@@ -73,20 +74,17 @@ AdvisedSupport则提供一些代理的元数据：拦截的方法，目标对象
 
 ***注意此时的invoke顺序是JdkDynamicAopProxy.invoke() -> MethodInterceptor.invoke() -> MethodInvocation.invoke() -> original mehtod()***
 ```
-// 1. 设置被代理对象(Joinpoint)
+// 设置被代理对象(Joinpoint)
 AdvisedSupport advisedSupport = new AdvisedSupport();
 TargetSource targetSource = new TargetSource(helloWorldService, HelloWorldService.class);
 advisedSupport.setTargetSource(targetSource);
-
-// 2. 设置拦截器(Advice)
+// 设置拦截器(Advice)
 TimerInterceptor timerInterceptor = new TimerInterceptor();
 advisedSupport.setMethodInterceptor(timerInterceptor);
-
-// 3. 创建代理(Proxy)
+// 创建代理(Proxy)
 JdkDynamicAopProxy jdkDynamicAopProxy = new JdkDynamicAopProxy(advisedSupport);
 HelloWorldService helloWorldServiceProxy = (HelloWorldService) jdkDynamicAopProxy.getProxy();
-
-// 4. 基于AOP的调用
+// 基于AOP的调用
 helloWorldServiceProxy.helloWorld();
 ```
 
