@@ -1907,6 +1907,9 @@ footer {
   margin: 0;
   padding: 0;
 }
+.article-content .highlight pre .line {
+  min-height: 15px;
+}
 .article-content .highlight table {
   margin: 0;
   width: auto;
