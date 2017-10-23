@@ -78,12 +78,15 @@ AdvisedSupport则提供一些代理的元数据：拦截的方法，目标对象
 AdvisedSupport advisedSupport = new AdvisedSupport();
 TargetSource targetSource = new TargetSource(helloWorldService, HelloWorldService.class);
 advisedSupport.setTargetSource(targetSource);
+
 // 设置拦截器(Advice)
 TimerInterceptor timerInterceptor = new TimerInterceptor();
 advisedSupport.setMethodInterceptor(timerInterceptor);
+
 // 创建代理(Proxy)
 JdkDynamicAopProxy jdkDynamicAopProxy = new JdkDynamicAopProxy(advisedSupport);
 HelloWorldService helloWorldServiceProxy = (HelloWorldService) jdkDynamicAopProxy.getProxy();
+
 // 基于AOP的调用
 helloWorldServiceProxy.helloWorld();
 ```
