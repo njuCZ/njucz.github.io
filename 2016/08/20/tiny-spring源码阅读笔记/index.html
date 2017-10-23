@@ -73,7 +73,7 @@
     </p>
   <p class="article-time">
     <time datetime="2016-08-20T12:08:45.000Z" itemprop="datePublished">Aug 20 2016</time>
-    更新日期:<time datetime="2017-10-16T10:05:58.000Z" itemprop="dateModified">Oct 16 2017</time>
+    更新日期:<time datetime="2017-10-23T09:24:19.000Z" itemprop="dateModified">Oct 23 2017</time>
     
   </p>
 </header>
@@ -91,7 +91,8 @@
 <blockquote>
 <p>The objects that form the backbone of your application and that are managed by the Spring IoC container are called beans</p>
 </blockquote>
-<p>bean指的是任何通过spring管理生成的object，和普通的objetc的唯一区别便是是否由spring的容器所管理。在spring中，每个bean都是以BeanDefinition的形式存在的。大家都知道ioc的核心实现是通过反射完成的，要通过反射获得一个object，那么该object的class，该object的成员变量，以及引用该object的name都是必需的属性。所以大家可以看到BeanDefinition包含以下属性：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">private Object bean;</div><div class="line">private Class beanClass;</div><div class="line">private String beanClassName;</div><div class="line">private PropertyValues propertyValues;</div></pre></td></tr></table></figure></p>
+<p>bean指的是任何通过spring管理生成的object，和普通的object的唯一区别便是是否由spring的容器所管理。在spring中，每个bean都是以BeanDefinition的形式存在的。大家都知道ioc的核心实现是通过反射完成的，要通过反射获得一个object，那么该object的class，该object的成员变量，以及表示该object的name都是必需的属性。所以大家可以看到BeanDefinition包含以下属性：<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">private Object bean;</div><div class="line">private Class beanClass;</div><div class="line">private String beanClassName;</div><div class="line">private PropertyValues propertyValues;</div></pre></td></tr></table></figure></p>
+<p>BeanDefinition对象在创建时只需知道beanClass，beanClassName和propertyValues属性，根据这些属性创建对应的对象则是由工厂类负责创建.</p>
 <p>工厂类负责构造对象，所以会包含ConcurrentHashMap<string, beandefinition="">，其中的key是BeanDefinition的beanClassName。子类AutowireCapableBeanFactory负责具体的创建bean的过程，即创建对象，注入属性。</string,></p>
 <h4 id="step-5-inject-bean-to-bean"><a href="#step-5-inject-bean-to-bean" class="headerlink" title="step-5-inject-bean-to-bean"></a>step-5-inject-bean-to-bean</h4><p>step-4和step-5主要做一件事，读取解析xml，完成bean的构造。</p>
 <ul>
@@ -136,10 +137,10 @@
 <h4 id="step-7-method-interceptor-by-jdk-dynamic-proxy"><a href="#step-7-method-interceptor-by-jdk-dynamic-proxy" class="headerlink" title="step-7-method-interceptor-by-jdk-dynamic-proxy"></a>step-7-method-interceptor-by-jdk-dynamic-proxy</h4><p>JDk提供的的核心代理类是Proxy.newProxyInstance(ClassLoader loader, Class&lt;?&gt;[] interfaces, InvocationHandler h), 返回一个代理的实例，任何对该实例的调用都会经过InvocationHandler的处理。InvocationHandler则提供了一个invoke方法，用户可以在invoke方法里调用原本的方法，并添加其他的处理逻辑。</p>
 <p>JdkDynamicAopProxy就是负责上述的逻辑。因为此处JdkDynamicAopProxy是一个通用的代理类，需要做的额外的处理都各不相同，所以在invoke方法的实现引入了MethodInterceptor和MethodInvocation。MethodInterceptor由用户自己的逻辑产生，程序需要自己定义MethodInvocation。</p>
 <p>AdvisedSupport则提供一些代理的元数据：拦截的方法，目标对象，对象的class。</p>
-<p><strong><em>注意此时的invoke顺序是JdkDynamicAopProxy.invoke() -&gt; MethodInterceptor.invoke() -&gt; MethodInvocation.invoke() -&gt; original mehtod()</em></strong><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">// 1. 设置被代理对象(Joinpoint)</div><div class="line">AdvisedSupport advisedSupport = new AdvisedSupport();</div><div class="line">TargetSource targetSource = new TargetSource(helloWorldService, HelloWorldService.class);</div><div class="line">advisedSupport.setTargetSource(targetSource);</div><div class="line"></div><div class="line">// 2. 设置拦截器(Advice)</div><div class="line">TimerInterceptor timerInterceptor = new TimerInterceptor();</div><div class="line">advisedSupport.setMethodInterceptor(timerInterceptor);</div><div class="line"></div><div class="line">// 3. 创建代理(Proxy)</div><div class="line">JdkDynamicAopProxy jdkDynamicAopProxy = new JdkDynamicAopProxy(advisedSupport);</div><div class="line">HelloWorldService helloWorldServiceProxy = (HelloWorldService) jdkDynamicAopProxy.getProxy();</div><div class="line"></div><div class="line">// 4. 基于AOP的调用</div><div class="line">helloWorldServiceProxy.helloWorld();</div></pre></td></tr></table></figure></p>
+<p><strong><em>注意此时的invoke顺序是JdkDynamicAopProxy.invoke() -&gt; MethodInterceptor.invoke() -&gt; MethodInvocation.invoke() -&gt; original mehtod()</em></strong><br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">// 设置被代理对象(Joinpoint)</div><div class="line">AdvisedSupport advisedSupport = new AdvisedSupport();</div><div class="line">TargetSource targetSource = new TargetSource(helloWorldService, HelloWorldService.class);</div><div class="line">advisedSupport.setTargetSource(targetSource);</div><div class="line">// 设置拦截器(Advice)</div><div class="line">TimerInterceptor timerInterceptor = new TimerInterceptor();</div><div class="line">advisedSupport.setMethodInterceptor(timerInterceptor);</div><div class="line">// 创建代理(Proxy)</div><div class="line">JdkDynamicAopProxy jdkDynamicAopProxy = new JdkDynamicAopProxy(advisedSupport);</div><div class="line">HelloWorldService helloWorldServiceProxy = (HelloWorldService) jdkDynamicAopProxy.getProxy();</div><div class="line">// 基于AOP的调用</div><div class="line">helloWorldServiceProxy.helloWorld();</div></pre></td></tr></table></figure></p>
 <p><strong><em>多参考test case: JdkDynamicAopProxyTest</em></strong></p>
 <h4 id="step-9-auto-create-aop-proxy"><a href="#step-9-auto-create-aop-proxy" class="headerlink" title="step-9-auto-create-aop-proxy"></a>step-9-auto-create-aop-proxy</h4><p>为了能够自动的创建代理，那么应该在factory的createBean时完成相关工作。在这里，我们先引入BeanPostProcessor接口来代表完成bean初始化的工作，AspectJAwareAdvisorAutoProxyCreator就是负责在初始化时自动对对象进行代理。</p>
-<p>首先来看看一个advisor类的表示<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">&lt;bean id=&quot;aspectjAspect&quot; class=&quot;us.codecraft.tinyioc.aop.AspectJExpressionPointcutAdvisor&quot;&gt;</div><div class="line">  &lt;property name=&quot;advice&quot; ref=&quot;timeInterceptor&quot;&gt;&lt;/property&gt;</div><div class="line">  &lt;property name=&quot;expression&quot; value=&quot;execution(*us.codecraft.tinyioc.*.*(..))&quot;&gt;&lt;/property&gt;</div><div class="line">&lt;/bean&gt;</div></pre></td></tr></table></figure></p>
+<p>首先来看看一个advisor类的表示<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">&lt;bean id=&quot;aspectjAspect&quot; class=&quot;us.codecraft.tinyioc.aop.AspectJExpressionPointcutAdvisor&quot;&gt;</div><div class="line">  &lt;property name=&quot;advice&quot; ref=&quot;timeInterceptor&quot;&gt;&lt;/property&gt;</div><div class="line">  &lt;property name=&quot;expression&quot; value=&quot;execution(*us.codecraft.tinyioc.*.*(..))&quot;&gt;&lt;/property&gt;</div><div class="line">&lt;/bean&gt;</div></pre></td></tr></table></figure></p>
 <p>在AspectJAwareAdvisorAutoProxyCreator的postProcessAfterInitialization会首先获得所有的advisor类，然后遍历AspectJExpression是不是匹配当前的class。若是匹配，就会将当前的bean包装成一个JdkDynamicAopProxy的代理，并设置相关的代理方法。</p>
 <p>因为bean包含了普通的对象，拦截器对象还有BeanPostProcessor对象，那么这些对象的初始化有没有什么顺序呢？<br>首先看看AbstractApplicationContext的refresh()方法：</p>
 <ol>
@@ -153,7 +154,7 @@
 <p>CGLIB (and javassist) can create a proxy by subclassing. In this scenario the proxy becomes a subclass of the target class. No need for interfaces.</p>
 </blockquote>
 <p>此外，使用JDK Dynamic proxy对所有的方法访问都会经过代理，而cglib可以选择对部分方法进行代理，效率也更高。</p>
-<p>接下来来看看cglib如何实现代理的。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Enhancer enhancer = new Enhancer();</div><div class="line">enhancer.setSuperclass(advised.getTargetSource().getTargetClass());</div><div class="line">enhancer.setInterfaces(advised.getTargetSource().getInterfaces());</div><div class="line">enhancer.setCallback(new DynamicAdvisedInterceptor(advised));</div><div class="line">Object enhanced = enhancer.create();</div></pre></td></tr></table></figure></p>
+<p>接下来来看看cglib如何实现代理的。<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">Enhancer enhancer = new Enhancer();</div><div class="line">enhancer.setSuperclass(advised.getTargetSource().getTargetClass());</div><div class="line">enhancer.setInterfaces(advised.getTargetSource().getInterfaces());</div><div class="line">enhancer.setCallback(new DynamicAdvisedInterceptor(advised));</div><div class="line">Object enhanced = enhancer.create();</div></pre></td></tr></table></figure></p>
 <p>DynamicAdvisedInterceptor是对net.sf.cglib.proxy.MethodInterceptor的一个实现，也就是在指定的CglibMethodInvocation处调用advised的methodInterceptor</p>
 <p>至此，一个大概的支持ioc和aop的微型spring就完成了。</p>
   
@@ -179,6 +180,14 @@
 	
 <nav class="article-nav clearfix">
  
+ <div class="prev" >
+ <a href="/2017/10/23/git-Internal笔记/" title="git Internal笔记">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  git Internal笔记</span>
+</a>
+</div>
+
 
 <div class="next">
 <a href="/2015/03/23/Java默认排序算法问题/"  title="Java默认排序算法问题">
@@ -212,7 +221,11 @@
 		
 			<li><a href="/tags/API-versioning/" title="API versioning">API versioning<sup>1</sup></a></li>
 		
+			<li><a href="/tags/LCS/" title="LCS">LCS<sup>1</sup></a></li>
+		
 			<li><a href="/tags/django/" title="django">django<sup>1</sup></a></li>
+		
+			<li><a href="/tags/git/" title="git">git<sup>1</sup></a></li>
 		
 			<li><a href="/tags/github/" title="github">github<sup>1</sup></a></li>
 		

@@ -90,16 +90,16 @@
 <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>虽然Github提供了专门显示静态页面的工具，称为<a href="https://help.github.com/categories/github-pages-basics/" target="_blank" rel="external">Github Page</a>。然而要搭建一个成熟的博客，使用Github Page并不太方便。目前搭建github博客的大多数都是使用<a href="http://jekyllrb.com/" target="_blank" rel="external">Jekyll</a>、<a href="http://octopress.org/" target="_blank" rel="external">Octopress</a>或者<a href="http://hexo.io/" target="_blank" rel="external">Hexo</a>。本文主要介绍如何使用Hexo搭建Github博客</p>
 <h1 id="环境配置"><a href="#环境配置" class="headerlink" title="环境配置"></a>环境配置</h1><p>在配置Hexo前需要先配置Node.js、以及Git环境（包括git客户端和Github使用），简明教程可参考文章<a href="http://zipperary.com/2013/05/28/hexo-guide-2/" target="_blank" rel="external">http://zipperary.com/2013/05/28/hexo-guide-2/</a>。配置完成后即可开始配置Hexo</p>
 <h2 id="安装Hexo"><a href="#安装Hexo" class="headerlink" title="安装Hexo"></a>安装Hexo</h2><p>利用 npm 命令即可安装。（在任意位置点击鼠标右键，选择Git bash）</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">npm install -g hexo</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">npm install -g hexo</div></pre></td></tr></table></figure>
 <h2 id="初始化博客文件夹"><a href="#初始化博客文件夹" class="headerlink" title="初始化博客文件夹"></a>初始化博客文件夹</h2><p>假定你想将博客文件的位置放在E:\blogs处，在命令行到达相应的目录下，执行以下指令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">hexo init</div><div class="line">npm install</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">hexo init</div><div class="line">npm install</div></pre></td></tr></table></figure>
 <h2 id="生成静态页面"><a href="#生成静态页面" class="headerlink" title="生成静态页面"></a>生成静态页面</h2><p>由于使用Hexo写文章是使用Markdown语法写在*.md(位于source/_posts/文件夹中)文件里，所以在浏览器上阅读前要先生成相应的静态网页</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hexo generate   //缩写: hexo g</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">hexo generate   //缩写: hexo g</div></pre></td></tr></table></figure>
 <h2 id="本地查看预览"><a href="#本地查看预览" class="headerlink" title="本地查看预览"></a>本地查看预览</h2><p>执行如下命令，启动本地服务，进行文章预览调试</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hexo server   //缩写: hexo s</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">hexo server   //缩写: hexo s</div></pre></td></tr></table></figure>
 <p>浏览器输入<a href="http://localhost:4000" target="_blank" rel="external">http://localhost:4000</a>就可以看到效果</p>
 <h2 id="写文章"><a href="#写文章" class="headerlink" title="写文章"></a>写文章</h2><p>假定要写的文章名为post,那么输入以下命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">hexo new <span class="string">"post"</span>  //缩写: hexo n <span class="string">"post"</span></div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">hexo new <span class="string">"post"</span>  //缩写: hexo n <span class="string">"post"</span></div></pre></td></tr></table></figure>
 <p>执行命令后，会在项目source/_posts/中生成post.md文件，用编辑器打开编写即可。当然，也可以直接在source/_posts/中新建一个md文件。</p>
 <p>关于Markdown语法可参考以下两篇文章：<br><a href="http://www.jianshu.com/p/q81RER" target="_blank" rel="external">献给写作者的 Markdown 新手指南</a><br><a href="http://wowubuntu.com/markdown/" target="_blank" rel="external">Markdown 语法说明 (简体中文版)</a></p>
 <h2 id="部署"><a href="#部署" class="headerlink" title="部署"></a>部署</h2><p>编辑_config.yml，并替换相应的repository</p>
@@ -108,11 +108,11 @@
     repository: https://github.com/njuCZ/njucz.github.io.git
     branch: master
 </code></pre><p>如果是要为一个项目制作网站，那么需要把branch设置为gh-pages<br>之后执行下列指令即可完成部署:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">hexo clean</div><div class="line">hexo generate</div><div class="line">hexo deploy</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">hexo clean</div><div class="line">hexo generate</div><div class="line">hexo deploy</div></pre></td></tr></table></figure>
 <h2 id="主题安装"><a href="#主题安装" class="headerlink" title="主题安装"></a>主题安装</h2><p>萝卜白菜各有所爱，玩博客换主题是必不可少的，hexo的主题列表是<a href="https://github.com/hexojs/hexo/wiki/Themes" target="_blank" rel="external">Hexo Themes</a>,各人可依据自己喜好进行安装。<br>本博客使用的是pacman的主题，安装方法如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">git <span class="built_in">clone</span> https://github.com/A-limon/pacman.git themes/pacman</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">git <span class="built_in">clone</span> https://github.com/A-limon/pacman.git themes/pacman</div></pre></td></tr></table></figure>
 <p>安装完成后，打开_config.yml，修改主题为pacman</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">theme:pacman</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><div class="line">theme:pacman</div></pre></td></tr></table></figure>
 <h2 id="博客配置"><a href="#博客配置" class="headerlink" title="博客配置"></a>博客配置</h2><p>参考文章<a href="http://zipperary.com/2013/05/29/hexo-guide-3/" target="_blank" rel="external">http://zipperary.com/2013/05/29/hexo-guide-3/</a>    </p>
 <h1 id="回顾"><a href="#回顾" class="headerlink" title="回顾"></a>回顾</h1><h2 id="Hexo命令"><a href="#Hexo命令" class="headerlink" title="Hexo命令"></a>Hexo命令</h2><p>常用命令:</p>
 <ul>
@@ -190,7 +190,11 @@
 		
 			<li><a href="/tags/API-versioning/" title="API versioning">API versioning<sup>1</sup></a></li>
 		
+			<li><a href="/tags/LCS/" title="LCS">LCS<sup>1</sup></a></li>
+		
 			<li><a href="/tags/django/" title="django">django<sup>1</sup></a></li>
+		
+			<li><a href="/tags/git/" title="git">git<sup>1</sup></a></li>
 		
 			<li><a href="/tags/github/" title="github">github<sup>1</sup></a></li>
 		

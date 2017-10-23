@@ -4,16 +4,12 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>查阅jdk源码 | njuCZ&#39;s blog</title>
+    <title>git Internal笔记 | njuCZ&#39;s blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="njuCZ">
     
-    <meta name="description" content="Eclipse 查看jdk源码配置
-点击”window” -&amp;gt; “Preferences” -&amp;gt; “Java” -&amp;gt; “Installed JRES”
-在 “Installed JRES” 中列出了所有的JRE环境，选择一个JRE，点击”Edit”
-选中rt.jar 这一项 
-点击">
+    <meta name="description" content="vcs meritgit VS svngit modelblobobjectgit argorithm: diffrebase VS merge">
     
     
     
@@ -69,15 +65,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/03/16/查阅jdk源码/" title="查阅jdk源码" itemprop="url">查阅jdk源码</a>
+      <a href="/2017/10/23/git-Internal笔记/" title="git Internal笔记" itemprop="url">git Internal笔记</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://njucz.github.io" title="njuCZ">njuCZ</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-03-16T15:42:25.000Z" itemprop="datePublished">Mar 16 2015</time>
-    更新日期:<time datetime="2017-09-19T10:38:12.739Z" itemprop="dateModified">Sep 19 2017</time>
+    <time datetime="2017-10-23T08:02:43.000Z" itemprop="datePublished">Oct 23 2017</time>
+    更新日期:<time datetime="2017-10-23T08:12:11.000Z" itemprop="dateModified">Oct 23 2017</time>
     
   </p>
 </header>
@@ -86,32 +82,16 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
-		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Eclipse-查看jdk源码"><span class="toc-number">1.</span> <span class="toc-text">Eclipse 查看jdk源码</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#配置"><span class="toc-number">1.1.</span> <span class="toc-text">配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用"><span class="toc-number">1.2.</span> <span class="toc-text">使用</span></a></li></ol></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#vcs-merit"><span class="toc-number">1.</span> <span class="toc-text">vcs merit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-VS-svn"><span class="toc-number">2.</span> <span class="toc-text">git VS svn</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-model"><span class="toc-number">3.</span> <span class="toc-text">git model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#blob"><span class="toc-number">3.0.1.</span> <span class="toc-text">blob</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#object"><span class="toc-number">3.0.2.</span> <span class="toc-text">object</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-argorithm-diff"><span class="toc-number">4.</span> <span class="toc-text">git argorithm: diff</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rebase-VS-merge"><span class="toc-number">5.</span> <span class="toc-text">rebase VS merge</span></a></li></ol>
 		</div>
 		
-		<h1 id="Eclipse-查看jdk源码"><a href="#Eclipse-查看jdk源码" class="headerlink" title="Eclipse 查看jdk源码"></a>Eclipse 查看jdk源码</h1><h2 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h2><ul>
-<li>点击”window” -&gt; “Preferences” -&gt; “Java” -&gt; “Installed JRES”</li>
-<li>在 “Installed JRES” 中列出了所有的JRE环境，选择一个JRE，点击”Edit”</li>
-<li>选中rt.jar 这一项 </li>
-<li>点击 “Source Attachment”,在弹出的文件选择框中选择对应的jdk目录下的”src.zip”</li>
-<li>点击”OK”按钮</li>
-</ul>
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><ul>
-<li>按下Ctrl键</li>
-<li>在Eclipse中，将鼠标移到类型、方法或字段的名称上，直到名称变为带有下划线为止</li>
-<li>单击一次超链接</li>
-</ul>
-<p>或者</p>
-<ul>
-<li>将鼠标移到类型、方法或字段的名称上，按下F3键</li>
-</ul>
-  
+		<h1 id="vcs-merit"><a href="#vcs-merit" class="headerlink" title="vcs merit"></a>vcs merit</h1><h1 id="git-VS-svn"><a href="#git-VS-svn" class="headerlink" title="git VS svn"></a>git VS svn</h1><h1 id="git-model"><a href="#git-model" class="headerlink" title="git model"></a>git model</h1><h3 id="blob"><a href="#blob" class="headerlink" title="blob"></a>blob</h3><h3 id="object"><a href="#object" class="headerlink" title="object"></a>object</h3><h1 id="git-argorithm-diff"><a href="#git-argorithm-diff" class="headerlink" title="git argorithm: diff"></a>git argorithm: diff</h1><h1 id="rebase-VS-merge"><a href="#rebase-VS-merge" class="headerlink" title="rebase VS merge"></a>rebase VS merge</h1>  
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/java/">java</a><a href="/tags/jdk/">jdk</a>
+  <span></span> <a href="/tags/git/">git</a><a href="/tags/LCS/">LCS</a>
   </div>
 
 
@@ -119,7 +99,7 @@
 
 <div class="article-share" id="share">
 
-  <div data-url="http://njucz.github.io/2015/03/16/查阅jdk源码/" data-title="查阅jdk源码 | njuCZ&#39;s blog" data-tsina="" class="share clearfix">
+  <div data-url="http://njucz.github.io/2017/10/23/git-Internal笔记/" data-title="git Internal笔记 | njuCZ&#39;s blog" data-tsina="" class="share clearfix">
   </div>
 
 </div>
@@ -128,19 +108,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/03/23/Java默认排序算法问题/" title="Java默认排序算法问题">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  Java默认排序算法问题</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/03/09/Django-API-版本控制/"  title="Django API 版本控制">
+<a href="/2016/08/20/tiny-spring源码阅读笔记/"  title="tiny-spring源码阅读笔记">
  <strong>NEXT:</strong><br/> 
- <span>Django API 版本控制
+ <span>tiny-spring源码阅读笔记
 </span>
 </a>
 </div>
@@ -153,7 +125,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
-  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Eclipse-查看jdk源码"><span class="toc-number">1.</span> <span class="toc-text">Eclipse 查看jdk源码</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#配置"><span class="toc-number">1.1.</span> <span class="toc-text">配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用"><span class="toc-number">1.2.</span> <span class="toc-text">使用</span></a></li></ol></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#vcs-merit"><span class="toc-number">1.</span> <span class="toc-text">vcs merit</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-VS-svn"><span class="toc-number">2.</span> <span class="toc-text">git VS svn</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-model"><span class="toc-number">3.</span> <span class="toc-text">git model</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#blob"><span class="toc-number">3.0.1.</span> <span class="toc-text">blob</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#object"><span class="toc-number">3.0.2.</span> <span class="toc-text">object</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#git-argorithm-diff"><span class="toc-number">4.</span> <span class="toc-text">git argorithm: diff</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#rebase-VS-merge"><span class="toc-number">5.</span> <span class="toc-text">rebase VS merge</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -169,15 +141,19 @@
 		
 			<li><a href="/tags/API-versioning/" title="API versioning">API versioning<sup>1</sup></a></li>
 		
+			<li><a href="/tags/LCS/" title="LCS">LCS<sup>1</sup></a></li>
+		
 			<li><a href="/tags/django/" title="django">django<sup>1</sup></a></li>
+		
+			<li><a href="/tags/git/" title="git">git<sup>1</sup></a></li>
 		
 			<li><a href="/tags/github/" title="github">github<sup>1</sup></a></li>
 		
 			<li><a href="/tags/hexo/" title="hexo">hexo<sup>1</sup></a></li>
 		
-			<li><a href="/tags/java/" title="java">java<sup>3</sup></a></li>
+			<li><a href="/tags/java/" title="java">java<sup>2</sup></a></li>
 		
-			<li><a href="/tags/jdk/" title="jdk">jdk<sup>2</sup></a></li>
+			<li><a href="/tags/jdk/" title="jdk">jdk<sup>1</sup></a></li>
 		
 			<li><a href="/tags/sort/" title="sort">sort<sup>1</sup></a></li>
 		
