@@ -84,7 +84,7 @@ git保存是文件snapshot(即文件的完整内容)，容易恢复历史版本
     </p>
   <p class="article-time">
     <time datetime="2016-10-23T08:02:43.000Z" itemprop="datePublished">Oct 23 2016</time>
-    更新日期:<time datetime="2017-10-24T10:40:23.000Z" itemprop="dateModified">Oct 24 2017</time>
+    更新日期:<time datetime="2017-10-24T10:49:38.000Z" itemprop="dateModified">Oct 24 2017</time>
     
   </p>
 </header>
@@ -117,9 +117,9 @@ git保存是文件snapshot(即文件的完整内容)，容易恢复历史版本
 </ul>
 </li>
 </ul>
-<h1 id="git-model"><a href="#git-model" class="headerlink" title="git model"></a>git model</h1><h3 id="blob-object-数据对象"><a href="#blob-object-数据对象" class="headerlink" title="blob object(数据对象)"></a>blob object(数据对象)</h3><p>blob是git中最基本的存储对象，文件的内容加上特定头部信息的<strong>SHA-1</strong>校验和作为文件命名。优点是hash全局唯一，能够保证分布式系统的一致性。但是代价是丢失了文件名，也不方便记忆引用。<br><img src="/img/git_blob.png" alt=""><br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">$ echo &apos;version 1&apos; &gt; test.txt</div><div class="line">$ git hash-object -w test.txt</div><div class="line">83baae61804e65cc73a7201a7252750c76066a30</div></pre></td></tr></table></figure></p>
+<h1 id="git-model"><a href="#git-model" class="headerlink" title="git model"></a>git model</h1><h3 id="blob-object-数据对象"><a href="#blob-object-数据对象" class="headerlink" title="blob object(数据对象)"></a>blob object(数据对象)</h3><p>blob是git中最基本的存储对象，文件的内容加上特定头部信息的<strong>SHA-1</strong>校验和作为文件命名。优点是hash全局唯一，能够保证分布式系统的一致性。但是代价是丢失了文件名，也不方便记忆引用。<br><img src="/img/git_blob_object.png" alt=""><br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">$ echo &apos;version 1&apos; &gt; test.txt</div><div class="line">$ git hash-object -w test.txt</div><div class="line">83baae61804e65cc73a7201a7252750c76066a30</div></pre></td></tr></table></figure></p>
 <h3 id="tree-object-树对象"><a href="#tree-object-树对象" class="headerlink" title="tree object(树对象)"></a>tree object(树对象)</h3><p>上一小节中，单个文件可以作为blob object保存，那么directory又该怎么保存呢？</p>
-<p>在git中，</p>
+<p>在git中，Git以类似于UNIX文件系统的方式存储内容。目录文件中的每一行都包含一个指向数据对象或者子树对象的 SHA-1 指针，以及相应的模式、类型、文件名信息。<br><img src="/img/git_tree_object.png" alt=""></p>
 <h1 id="git-argorithm-diff"><a href="#git-argorithm-diff" class="headerlink" title="git argorithm: diff"></a>git argorithm: diff</h1><h1 id="rebase-VS-merge"><a href="#rebase-VS-merge" class="headerlink" title="rebase VS merge"></a>rebase VS merge</h1><h1 id="reference"><a href="#reference" class="headerlink" title="reference"></a>reference</h1><p><a href="https://stackoverflow.com/questions/802573/difference-between-git-and-cvs" target="_blank" rel="external">https://stackoverflow.com/questions/802573/difference-between-git-and-cvs</a></p>
   
 	</div>
