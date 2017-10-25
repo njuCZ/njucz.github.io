@@ -935,11 +935,14 @@ article .article-content ol {
 article .article-content ul li {
   list-style: disc;
   text-align: match-parent;
-  margin: 0.5em 0;
+  margin: 0 0;
+}
+article .article-content ul li p {
+  margin: 0;
 }
 article .article-content ol li {
   list-style-type: decimal;
-  margin: 0.5em 0;
+  margin: 0 0;
 }
 article .article-content dl dt {
   font-weight: blod;
@@ -1369,6 +1372,7 @@ section.comment {
   background: #eee;
   margin: 2em 0 0 0.5em;
   padding: 1em;
+  display: block !important;
 }
 .toc-article strong {
   padding: 0.3em 0;
