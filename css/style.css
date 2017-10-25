@@ -935,14 +935,14 @@ article .article-content ol {
 article .article-content ul li {
   list-style: disc;
   text-align: match-parent;
-  margin: 0 0;
+  margin: 0.5em 0;
 }
 article .article-content ul li p {
   margin: 0;
 }
 article .article-content ol li {
   list-style-type: decimal;
-  margin: 0 0;
+  margin: 0.5em 0;
 }
 article .article-content dl dt {
   font-weight: blod;
