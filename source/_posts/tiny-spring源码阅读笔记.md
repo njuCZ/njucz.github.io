@@ -7,7 +7,6 @@ tags: [java, spring]
 tiny-spring项目把重要的一些历史版本都进行了tag管理。共分为了十个版本，接下来我将记录下每个里程碑版本的一些理解。
 
 #### step-3-inject-bean-with-property
-
 首先理清下bean的概念：
 
 > The objects that form the backbone of your application and that are managed by the Spring IoC container are called beans
