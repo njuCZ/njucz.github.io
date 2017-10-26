@@ -74,7 +74,7 @@ System.out.">
     </p>
   <p class="article-time">
     <time datetime="2017-08-16T03:03:46.000Z" itemprop="datePublished">Aug 16 2017</time>
-    更新日期:<time datetime="2017-10-26T07:58:19.000Z" itemprop="dateModified">Oct 26 2017</time>
+    更新日期:<time datetime="2017-10-26T08:24:22.000Z" itemprop="dateModified">Oct 26 2017</time>
     
   </p>
 </header>
@@ -83,7 +83,7 @@ System.out.">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
-		<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出初体验"><span class="toc-number">1.</span> <span class="toc-text">java溢出初体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出机制"><span class="toc-number">2.</span> <span class="toc-text">java溢出机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java-类型提升"><span class="toc-number">3.</span> <span class="toc-text">java 类型提升</span></a></li></ol>
+		<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出初体验"><span class="toc-number">1.</span> <span class="toc-text">java溢出初体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出机制"><span class="toc-number">2.</span> <span class="toc-text">java溢出机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java-类型提升"><span class="toc-number">3.</span> <span class="toc-text">java 类型提升</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#prevent-overflow"><span class="toc-number">4.</span> <span class="toc-text">prevent overflow</span></a></li></ol>
 		</div>
 		
 		<h3 id="java溢出初体验"><a href="#java溢出初体验" class="headerlink" title="java溢出初体验"></a>java溢出初体验</h3><p>java的int是32位有符号整数类型，其最大值是0x7fffffff,最小值则是0x80000000。即int表示的数的范围是-2147483648 ～ 2147483647之间。当int类型的运算结果超出了这个范围时则发生了溢出，而且不会有任何异常抛出。</p>
@@ -110,14 +110,19 @@ System.out.">
 <p>If any of the operands is of a reference type,  <a href="https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.8" target="_blank" rel="external">unboxing conversion(JSL 5.1.8)</a> is performed. Then:<br>If either operand is of type double, the other is converted to double.<br>Otherwise, if either operand is of type float, the other is converted to float.<br>Otherwise, if either operand is of type long, the other is converted to long.<br>Otherwise, both operands are converted to type int.</p>
 </blockquote>
 <p>所以下述语句并不会发生溢出：<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">byte a = 40;</div><div class="line">byte b = 50;</div><div class="line">byte c = 100;</div><div class="line">int d = a * b / c;</div></pre></td></tr></table></figure></p>
-<p>虽然200已经超过了byte的范围，但是java compile在计算a * b之前已经都将它们转换成了int类型了，所以并不会有编译问题。</p>
+<p>虽然40 <em> 50 = 2000已经超过了byte的范围，但是java compile在计算a </em> b之前已经都将它们转换成了int类型了，所以并不会有编译问题。</p>
+<h3 id="prevent-overflow"><a href="#prevent-overflow" class="headerlink" title="prevent overflow"></a>prevent overflow</h3><ul>
+<li>使用类型提升，int型换成long型，long型转换BigDecimal</li>
+<li>使用Math.addExact和Math.multiplyExact，溢出时会抛出异常</li>
+<li>可以先用最大最小数判断一下，比如<code>if(b &gt; Integer.MAX_VALUE / a)</code></li>
+</ul>
   
 	</div>
 		<footer class="article-footer clearfix">
 
   <div class="article-tags">
   
-  <span></span> <a href="/tags/java/">java</a><a href="/tags/overflow/">overflow</a>
+  <span></span> <a href="/tags/java/">java</a>
   </div>
 
 
@@ -151,7 +156,7 @@ System.out.">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
-  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出初体验"><span class="toc-number">1.</span> <span class="toc-text">java溢出初体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出机制"><span class="toc-number">2.</span> <span class="toc-text">java溢出机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java-类型提升"><span class="toc-number">3.</span> <span class="toc-text">java 类型提升</span></a></li></ol>
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出初体验"><span class="toc-number">1.</span> <span class="toc-text">java溢出初体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出机制"><span class="toc-number">2.</span> <span class="toc-text">java溢出机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java-类型提升"><span class="toc-number">3.</span> <span class="toc-text">java 类型提升</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#prevent-overflow"><span class="toc-number">4.</span> <span class="toc-text">prevent overflow</span></a></li></ol>
   </div>
 
 <div id="asidepart">
@@ -180,8 +185,6 @@ System.out.">
 			<li><a href="/tags/java/" title="java">java<sup>3</sup></a></li>
 		
 			<li><a href="/tags/jdk/" title="jdk">jdk<sup>1</sup></a></li>
-		
-			<li><a href="/tags/overflow/" title="overflow">overflow<sup>1</sup></a></li>
 		
 			<li><a href="/tags/sort/" title="sort">sort<sup>1</sup></a></li>
 		
