@@ -9,8 +9,8 @@
     
     <meta name="author" content="njuCZ">
     
-    <meta name="description" content="java的int是32位有符号整数类型，其最大值是0x7fffffff,最小值则是0x80000000。即int表示的数的范围是-2147483648 ～ 2147483647之间。当int类型的运算结果超出了这个范围时则发生了溢出，而且不会有任何异常抛出。
-System.out.println(I">
+    <meta name="description" content="java溢出初体验java的int是32位有符号整数类型，其最大值是0x7fffffff,最小值则是0x80000000。即int表示的数的范围是-2147483648 ～ 2147483647之间。当int类型的运算结果超出了这个范围时则发生了溢出，而且不会有任何异常抛出。
+System.out.">
     
     
     
@@ -74,7 +74,7 @@ System.out.println(I">
     </p>
   <p class="article-time">
     <time datetime="2017-08-16T03:03:46.000Z" itemprop="datePublished">Aug 16 2017</time>
-    更新日期:<time datetime="2017-10-26T07:54:47.000Z" itemprop="dateModified">Oct 26 2017</time>
+    更新日期:<time datetime="2017-10-26T07:58:19.000Z" itemprop="dateModified">Oct 26 2017</time>
     
   </p>
 </header>
@@ -83,10 +83,10 @@ System.out.println(I">
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
-		
+		<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出初体验"><span class="toc-number">1.</span> <span class="toc-text">java溢出初体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出机制"><span class="toc-number">2.</span> <span class="toc-text">java溢出机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java-类型提升"><span class="toc-number">3.</span> <span class="toc-text">java 类型提升</span></a></li></ol>
 		</div>
 		
-		<p>java的int是32位有符号整数类型，其最大值是0x7fffffff,最小值则是0x80000000。即int表示的数的范围是-2147483648 ～ 2147483647之间。当int类型的运算结果超出了这个范围时则发生了溢出，而且不会有任何异常抛出。</p>
+		<h3 id="java溢出初体验"><a href="#java溢出初体验" class="headerlink" title="java溢出初体验"></a>java溢出初体验</h3><p>java的int是32位有符号整数类型，其最大值是0x7fffffff,最小值则是0x80000000。即int表示的数的范围是-2147483648 ～ 2147483647之间。当int类型的运算结果超出了这个范围时则发生了溢出，而且不会有任何异常抛出。</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">System.out.println(Integer.MAX_VALUE + 1);</div><div class="line">System.out.println(Integer.MIN_VALUE - 1);</div><div class="line"></div><div class="line">-2147483648</div><div class="line">2147483647</div></pre></td></tr></table></figure>
 <p>观察上述语句可发现：</p>
 <ul>
@@ -94,7 +94,7 @@ System.out.println(I">
 <li>当结果超出了integer的最小表示范围时，结果变成了正数</li>
 </ul>
 <p>那么上述的结论究竟对不对呢？是不是只要两个正数的操作（加法或乘法）发生溢出时结果就会变成负数呢？</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">int num = 907654321;</div><div class="line">System.out.println(num * 16);</div><div class="line">System.out.println(num * 16L);</div><div class="line"></div><div class="line">1637567248</div><div class="line">14522469136</div></pre></td></tr></table></figure>
+<h3 id="java溢出机制"><a href="#java溢出机制" class="headerlink" title="java溢出机制"></a>java溢出机制</h3><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">int num = 907654321;</div><div class="line">System.out.println(num * 16);</div><div class="line">System.out.println(num * 16L);</div><div class="line"></div><div class="line">1637567248</div><div class="line">14522469136</div></pre></td></tr></table></figure>
 <p>通过上述例子居然发现int和int类型相乘的结果虽然发生了溢出，但是结果并不是负数，还是一个正数。那么java在处理溢出的逻辑到底是怎样的？又是怎么得到这个结果的呢？</p>
 <p>我们先看看下面的例子:<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">int num = 907654321;</div><div class="line">System.out.println(Integer.toHexString(num));</div><div class="line">System.out.println(Long.toHexString(num * 16L));</div><div class="line">System.out.println((int)((num * 16L) &amp; 0xffffffff));</div><div class="line"></div><div class="line">3619b4b1</div><div class="line">3619b4b10</div><div class="line">1637567248</div></pre></td></tr></table></figure></p>
 <p>大家有没有发现神奇的一点： <code>(int)((num * 16L) &amp; 0xffffffff) == num * 16</code></p>
@@ -105,7 +105,7 @@ System.out.println(I">
 <p>也就是说int型整数相乘，结果只会保留低32位，高位会抛弃掉。所以num * 16L的值与0xffffffff做位与操作（即取后32位）就可以得到实际运算的结果了。</p>
 <p>那么下面的这些语句有没有bug呢？<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">long MonthNanoSeconds1 = 30 * 24 * 3600 * 1000 * 1000;</div><div class="line">long MonthNanoSeconds2 = 30 * 24 * 3600 * 1000 * 1000L;</div></pre></td></tr></table></figure></p>
 <p>将一个大的数赋值给long型变量，好像没什么问题。但是要注意到java是先计算右值，再赋值给long变量的。在计算右值的过程中（int型相乘）发生溢出，然后将溢出后截断的值赋给变量。而在第二行语句中由于java的运算规则从左到右，再与最后一个long型的1000相乘之前就已经溢出，所以结果也不对。正确的方式应该如下：<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">long MonthNanoSeconds = 30L * 24 * 3600 * 1000 * 1000;</div></pre></td></tr></table></figure></p>
-<p><em>int型整数相乘并不会进行类型提升(type promotion)，在<a href="https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2" target="_blank" rel="external">widening conversion(JSL 5.1.2)</a>写到</em>：</p>
+<h3 id="java-类型提升"><a href="#java-类型提升" class="headerlink" title="java 类型提升"></a>java 类型提升</h3><p><em>int型整数相乘并不会进行类型提升(type promotion)，在<a href="https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2" target="_blank" rel="external">widening conversion(JSL 5.1.2)</a>写到</em>：</p>
 <blockquote>
 <p>If any of the operands is of a reference type,  <a href="https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.8" target="_blank" rel="external">unboxing conversion(JSL 5.1.8)</a> is performed. Then:<br>If either operand is of type double, the other is converted to double.<br>Otherwise, if either operand is of type float, the other is converted to float.<br>Otherwise, if either operand is of type long, the other is converted to long.<br>Otherwise, both operands are converted to type int.</p>
 </blockquote>
@@ -151,7 +151,7 @@ System.out.println(I">
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
-  
+  <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出初体验"><span class="toc-number">1.</span> <span class="toc-text">java溢出初体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java溢出机制"><span class="toc-number">2.</span> <span class="toc-text">java溢出机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#java-类型提升"><span class="toc-number">3.</span> <span class="toc-text">java 类型提升</span></a></li></ol>
   </div>
 
 <div id="asidepart">
