@@ -1,0 +1,373 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  
+    <title>elasticsearch ngram, edgengram笔记 | njuCZ&#39;s blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="njuCZ">
+    
+    <meta name="description" content="本文主要讲解下elasticsearch中的ngram和edgengram的特性，并结合实际例子分析下它们的异同
+Analyzer笔记Analysis 简介理解elasticsearch的ngram首先需要了解elasticsearch中的analysis。在此我们快速回顾一下基本原理：
+当一个文档">
+    
+    
+    
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/pacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/pacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/logo.svg" alt="njuCZ&#39;s blog" title="njuCZ&#39;s blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="njuCZ&#39;s blog">njuCZ&#39;s blog</a></h1>
+				<h2 class="blog-motto">Walk steps step by step</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+					<li>
+					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="text" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:njucz.github.io">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2017/12/20/elasticsearch ngram,edgengram笔记/" title="elasticsearch ngram, edgengram笔记" itemprop="url">elasticsearch ngram, edgengram笔记</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://njucz.github.io" title="njuCZ">njuCZ</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2017-12-20T10:32:24.000Z" itemprop="datePublished">Dec 20 2017</time>
+    更新日期:<time datetime="2017-12-21T11:00:42.000Z" itemprop="dateModified">Dec 21 2017</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Analyzer笔记"><span class="toc-number">1.</span> <span class="toc-text">Analyzer笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Analysis-简介"><span class="toc-number">1.1.</span> <span class="toc-text">Analysis 简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#index-analyzer-VS-search-analyzer"><span class="toc-number">1.2.</span> <span class="toc-text">index analyzer VS search analyzer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Analyze-API"><span class="toc-number">1.3.</span> <span class="toc-text">Analyze API</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ngram"><span class="toc-number">2.</span> <span class="toc-text">Ngram</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Ngram-Tokenizer"><span class="toc-number">2.1.</span> <span class="toc-text">Ngram Tokenizer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ngram-Token-Filter"><span class="toc-number">2.2.</span> <span class="toc-text">Ngram Token Filter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部分单词匹配"><span class="toc-number">2.3.</span> <span class="toc-text">部分单词匹配</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Edge-Ngram"><span class="toc-number">3.</span> <span class="toc-text">Edge Ngram</span></a></li></ol>
+		</div>
+		
+		<p>本文主要讲解下elasticsearch中的ngram和edgengram的特性，并结合实际例子分析下它们的异同</p>
+<h2 id="Analyzer笔记"><a href="#Analyzer笔记" class="headerlink" title="Analyzer笔记"></a>Analyzer笔记</h2><h3 id="Analysis-简介"><a href="#Analysis-简介" class="headerlink" title="Analysis 简介"></a>Analysis 简介</h3><p>理解elasticsearch的ngram首先需要了解elasticsearch中的<code>analysis</code>。在此我们快速回顾一下基本原理：</p>
+<p>当一个文档被索引时，每个field都可能会创建一个倒排索引（如果mapping的时候没有设置不索引该field）。倒排索引的过程就是将文档通过analyzer分成一个一个的term,每一个term都指向包含这个term的文档集合。当查询query时，elasticsearch会根据搜索类型决定是否对query进行analyze，然后和倒排索引中的term进行相关性查询，匹配相应的文档</p>
+<p>analyzer = CharFilters（0个或多个） +  Tokenizer(恰好一个) + TokenFilters(0个或多个)</p>
+<h3 id="index-analyzer-VS-search-analyzer"><a href="#index-analyzer-VS-search-analyzer" class="headerlink" title="index analyzer VS search analyzer"></a>index analyzer VS search analyzer</h3><p>如果mapping中只设置了一个analyzer，那么这个analyzer会同时用于索引文档和搜索query。当然索引文档和对query进行analysis也可以使用不同的analyzer</p>
+<p>一个特殊的情况是有的query是需要被analyzed，有的并不需要。例如<code>match query</code>会先用search analyzer进行分析，然后去相应field的倒排索引进行匹配。而<code>term query</code>并不会对query内容进行分析，而是直接和相应field的倒排索引去匹配</p>
+<h3 id="Analyze-API"><a href="#Analyze-API" class="headerlink" title="Analyze API"></a>Analyze API</h3><p>Analyze API是一个有效的方式查看分析后的结果：<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">POST _analyze</div><div class="line">&#123;</div><div class="line">    &quot;analyzer&quot; : &quot;standard&quot;,</div><div class="line">    &quot;text&quot; : &quot;hello, world&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>输出的结果如下所示，即<code>[hello, world]</code>：</p>
+<h2 id="Ngram"><a href="#Ngram" class="headerlink" title="Ngram"></a>Ngram</h2><p>在机器学习和数据挖掘领域，ngram通常指的是n个词的序列。不过在elasticsearch中，ngram代表的是n个字符的序列。可以把ngram理解成长度为n的滑动窗口，在文档中滑动产生的序列</p>
+<h3 id="Ngram-Tokenizer"><a href="#Ngram-Tokenizer" class="headerlink" title="Ngram Tokenizer"></a>Ngram Tokenizer</h3><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">POST _analyze</div><div class="line">&#123;</div><div class="line">  &quot;tokenizer&quot;: &quot;ngram&quot;,</div><div class="line">  &quot;text&quot;: &quot;Quick Fox&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>ngram分词器默认会产生最小长度为1，最大长度为2的N-grams序列。上述查询语句的输出是<br><code>[ Q, Qu, u, ui, i, ic, c, ck, k, &quot;k &quot;, &quot; &quot;, &quot; F&quot;, F, Fo, o, ox, x ]</code></p>
+<p>也可以自定义ngram tokenizer的一些配置：</p>
+<ul>
+<li>min_gram： 指定产生的最小长度的字符序列，默认为1</li>
+<li>max_gram： 指定产生的最大长度的字符序列，默认为2</li>
+<li>token_chars: 指定生成的token应该包含哪些字符.对没有包含进的字符进行分割，默认为[],即保留所有字符<ul>
+<li>letter - eg: <code>a</code>,<code>b</code>,<code>字</code></li>
+<li>digit - eg: <code>3</code>,<code>7</code></li>
+<li>whitespace - eg: <code>&quot; &quot;</code>, <code>&quot;\n&quot;</code></li>
+<li>punctuation - eg: <code>!</code>, <code>&quot;</code></li>
+<li>symbol - eg: <code>$</code>,<code>√</code><br>定义min_gram和max_gram应该按照使用场景来定。使用ngram的一个常见场景就是自动补全。如果单个字符也进行自动补全，那么可能匹配的suggestion太多，导致没有太大意义。</li>
+</ul>
+</li>
+</ul>
+<p>另一个需要考虑的便是性能，产生大量的ngram占用空间更大，搜索时花费的事件也更多。</p>
+<p>假如现在需要将ngrams生成的token都转换成小写形式，可以使用如下形式<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">PUT my_index</div><div class="line">&#123;</div><div class="line">   &quot;settings&quot;: &#123;</div><div class="line">      &quot;analysis&quot;: &#123;</div><div class="line">         &quot;tokenizer&quot;: &#123;</div><div class="line">            &quot;ngram_tokenizer&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;nGram&quot;,</div><div class="line">               &quot;min_gram&quot;: 4,</div><div class="line">               &quot;max_gram&quot;: 4,</div><div class="line">               &quot;token_chars&quot;: [ &quot;letter&quot;, &quot;digit&quot; ]</div><div class="line">            &#125;</div><div class="line">         &#125;,</div><div class="line">         &quot;analyzer&quot;: &#123;</div><div class="line">            &quot;ngram_tokenizer_analyzer&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;custom&quot;,</div><div class="line">               &quot;tokenizer&quot;: &quot;ngram_tokenizer&quot;,</div><div class="line">               &quot;filter&quot;: [</div><div class="line">                  &quot;lowercase&quot;</div><div class="line">               ]</div><div class="line">            &#125;</div><div class="line">         &#125;</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">POST my_index/_analyze</div><div class="line">&#123;</div><div class="line">  &quot;analyzer&quot;: &quot;ngram_tokenizer_analyzer&quot;,</div><div class="line">  &quot;text&quot;: &quot;Hello, World!&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>生成的结果序列是<code>[ello, hell, orld, worl]</code></p>
+<h3 id="Ngram-Token-Filter"><a href="#Ngram-Token-Filter" class="headerlink" title="Ngram Token Filter"></a>Ngram Token Filter</h3><p>上述的例子也可以使用Ngram Token Filter，配上standard的分词器和lower-case的过滤器。<br>原文本被standard分词器以whitespace和punctuation分割成token，然后通过lowercase过滤器转换成小写形式，最后通过ngram filter生成长度为4的字符序列。<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">PUT /my_index</div><div class="line">&#123;</div><div class="line">   &quot;settings&quot;: &#123;</div><div class="line">      &quot;analysis&quot;: &#123;</div><div class="line">         &quot;filter&quot;: &#123;</div><div class="line">            &quot;ngram_filter&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;nGram&quot;,</div><div class="line">               &quot;min_gram&quot;: 4,</div><div class="line">               &quot;max_gram&quot;: 4</div><div class="line">            &#125;</div><div class="line">         &#125;,</div><div class="line">         &quot;analyzer&quot;: &#123;</div><div class="line">            &quot;ngram_filter_analyzer&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;custom&quot;,</div><div class="line">               &quot;tokenizer&quot;: &quot;standard&quot;,</div><div class="line">               &quot;filter&quot;: [</div><div class="line">                  &quot;lowercase&quot;,</div><div class="line">                  &quot;ngram_filter&quot;</div><div class="line">               ]</div><div class="line">            &#125;</div><div class="line">         &#125;</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>上述mapping也会和ngram tokenizer产生同样的效果，具体实际应用如何选择应该视场景而定。假如想匹配的term中可以包含特殊字符，那么你应该使用ngram tokenizer。因为standard的tokenizer会过滤掉这些特殊字符。</p>
+<h3 id="部分单词匹配"><a href="#部分单词匹配" class="headerlink" title="部分单词匹配"></a>部分单词匹配</h3><p>标准的分词器都是以一个单词为最小单元进行匹配，若要对单词进行部分匹配，则可以考虑使用ngram。</p>
+<p>对于如下的mapping而言<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">PUT /test_index</div><div class="line">&#123;</div><div class="line">   &quot;settings&quot;: &#123;</div><div class="line">      &quot;number_of_shards&quot;: 1,</div><div class="line">      &quot;analysis&quot;: &#123;</div><div class="line">         &quot;filter&quot;: &#123;</div><div class="line">            &quot;ngram_filter&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;ngram&quot;,</div><div class="line">               &quot;min_gram&quot;: 2,</div><div class="line">               &quot;max_gram&quot;: 20</div><div class="line">            &#125;</div><div class="line">         &#125;,</div><div class="line">         &quot;analyzer&quot;: &#123;</div><div class="line">            &quot;ngram_analyzer&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;custom&quot;,</div><div class="line">               &quot;tokenizer&quot;: &quot;standard&quot;,</div><div class="line">               &quot;filter&quot;: [</div><div class="line">                  &quot;lowercase&quot;,</div><div class="line">                  &quot;ngram_filter&quot;</div><div class="line">               ]</div><div class="line">            &#125;</div><div class="line">         &#125;</div><div class="line">      &#125;</div><div class="line">   &#125;,</div><div class="line">   &quot;mappings&quot;: &#123;</div><div class="line">      &quot;doc&quot;: &#123;</div><div class="line">         &quot;_all&quot;: &#123;</div><div class="line">            &quot;type&quot;: &quot;string&quot;,</div><div class="line">            &quot;index_analyzer&quot;: &quot;ngram_analyzer&quot;,</div><div class="line">            &quot;search_analyzer&quot;: &quot;standard&quot;</div><div class="line">         &#125;,</div><div class="line">         &quot;properties&quot;: &#123;</div><div class="line">            &quot;word&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;string&quot;</div><div class="line">               &quot;index_analyzer&quot;: &quot;ngram_analyzer&quot;,</div><div class="line">               &quot;search_analyzer&quot;: &quot;standard&quot;</div><div class="line">            &#125;,</div><div class="line">            &quot;definition&quot;: &#123;</div><div class="line">               &quot;type&quot;: &quot;string&quot;</div><div class="line">            &#125;</div><div class="line">         &#125;</div><div class="line">      &#125;</div><div class="line">   &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">PUT /test_index/_bulk</div><div class="line">&#123;&quot;index&quot;:&#123;&quot;_index&quot;:&quot;test_index&quot;,&quot;_type&quot;:&quot;doc&quot;,&quot;_id&quot;:1&#125;&#125;</div><div class="line">&#123;&quot;word&quot;:&quot;democracy&quot;, &quot;definition&quot;:&quot;government by the people; a form of government&quot;&#125;</div></pre></td></tr></table></figure></p>
+<p>结合上述1.2小节所述的index analyzer以及search analyzer，用户可以判断如下的query能不能匹配到相应的文档<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">POST /test_index/_search</div><div class="line">&#123;</div><div class="line">    &quot;query&quot;: &#123;</div><div class="line">        &quot;match&quot;: &#123;</div><div class="line">           &quot;_all&quot;: &quot;go&quot;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">POST /test_index/_search</div><div class="line">&#123;</div><div class="line">    &quot;query&quot;: &#123;</div><div class="line">        &quot;match&quot;: &#123;</div><div class="line">           &quot;_all&quot;: &quot;Go&quot;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">POST /test_index/_search</div><div class="line">&#123;</div><div class="line">    &quot;query&quot;: &#123;</div><div class="line">        &quot;term&quot;: &#123;</div><div class="line">           &quot;_all&quot;: &quot;go&quot;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>上述的三条语句可以匹配到，但是下面的语句无法匹配到。<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">POST /test_index/_search</div><div class="line">&#123;</div><div class="line">    &quot;query&quot;: &#123;</div><div class="line">        &quot;term&quot;: &#123;</div><div class="line">           &quot;_all&quot;: &quot;Go&quot;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>即使文档中没有独立的词go，因为ngram的缘故，但是在倒排索引中也会产生go的token，由于standard的analyzer会自动转换成lowercase格式，所以match Go也能匹配。对于term Go就无法匹配到，因为倒排索引中的token只有go，没有Go</p>
+<h2 id="Edge-Ngram"><a href="#Edge-Ngram" class="headerlink" title="Edge Ngram"></a>Edge Ngram</h2><p>Edge Ngram和ngram类似，只不过Edge Ngram产生的序列都是从代索引文档的开头延伸出去的。<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">POST _analyze</div><div class="line">&#123;</div><div class="line">  &quot;tokenizer&quot;: &quot;edge_ngram&quot;,</div><div class="line">  &quot;text&quot;: &quot;Quick Fox&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>会产生<code>[ Q, Qu ]</code></p>
+<p>Edge Ngram也有着和ngram相同的配置</p>
+<ul>
+<li>min_gram： 指定产生的最小长度的字符序列，默认为1</li>
+<li>max_gram： 指定产生的最大长度的字符序列，默认为2</li>
+<li>token_chars: 指定生成的token应该包含哪些字符.对没有包含进的字符进行分割，默认为[],即保留所有字符<ul>
+<li>letter - eg: <code>a</code>,<code>b</code>,<code>字</code></li>
+<li>digit - eg: <code>3</code>,<code>7</code></li>
+<li>whitespace - eg: <code>&quot; &quot;</code>, <code>&quot;\n&quot;</code></li>
+<li>punctuation - eg: <code>!</code>, <code>&quot;</code></li>
+<li>symbol - eg: <code>$</code>,<code>√</code></li>
+</ul>
+</li>
+</ul>
+<p>对于如下的mapping<br><figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">PUT my_index</div><div class="line">&#123;</div><div class="line">  &quot;settings&quot;: &#123;</div><div class="line">    &quot;analysis&quot;: &#123;</div><div class="line">      &quot;analyzer&quot;: &#123;</div><div class="line">        &quot;my_analyzer&quot;: &#123;</div><div class="line">          &quot;tokenizer&quot;: &quot;my_tokenizer&quot;</div><div class="line">        &#125;</div><div class="line">      &#125;,</div><div class="line">      &quot;tokenizer&quot;: &#123;</div><div class="line">        &quot;my_tokenizer&quot;: &#123;</div><div class="line">          &quot;type&quot;: &quot;edge_ngram&quot;,</div><div class="line">          &quot;min_gram&quot;: 2,</div><div class="line">          &quot;max_gram&quot;: 10,</div><div class="line">          &quot;token_chars&quot;: [</div><div class="line">            &quot;letter&quot;,</div><div class="line">            &quot;digit&quot;</div><div class="line">          ]</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line">POST my_index/_analyze</div><div class="line">&#123;</div><div class="line">  &quot;analyzer&quot;: &quot;my_analyzer&quot;,</div><div class="line">  &quot;text&quot;: &quot;2 Quick Foxes.&quot;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>产生的token序列为<code>[ Qu, Qui, Quic, Quick, Fo, Fox, Foxe, Foxes ]</code></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/elasticsearch/">elasticsearch</a><a href="/tags/ngram/">ngram</a><a href="/tags/edgengram/">edgengram</a>
+  </div>
+
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://njucz.github.io/2017/12/20/elasticsearch ngram,edgengram笔记/" data-title="elasticsearch ngram, edgengram笔记 | njuCZ&#39;s blog" data-tsina="" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+
+<div class="next">
+<a href="/2017/08/16/java-int溢出总结/"  title="java int溢出总结">
+ <strong>NEXT:</strong><br/> 
+ <span>java int溢出总结
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Analyzer笔记"><span class="toc-number">1.</span> <span class="toc-text">Analyzer笔记</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Analysis-简介"><span class="toc-number">1.1.</span> <span class="toc-text">Analysis 简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#index-analyzer-VS-search-analyzer"><span class="toc-number">1.2.</span> <span class="toc-text">index analyzer VS search analyzer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Analyze-API"><span class="toc-number">1.3.</span> <span class="toc-text">Analyze API</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Ngram"><span class="toc-number">2.</span> <span class="toc-text">Ngram</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Ngram-Tokenizer"><span class="toc-number">2.1.</span> <span class="toc-text">Ngram Tokenizer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ngram-Token-Filter"><span class="toc-number">2.2.</span> <span class="toc-text">Ngram Token Filter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部分单词匹配"><span class="toc-number">2.3.</span> <span class="toc-text">部分单词匹配</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Edge-Ngram"><span class="toc-number">3.</span> <span class="toc-text">Edge Ngram</span></a></li></ol>
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/API-versioning/" title="API versioning">API versioning<sup>1</sup></a></li>
+		
+			<li><a href="/tags/LCS/" title="LCS">LCS<sup>1</sup></a></li>
+		
+			<li><a href="/tags/autocomplete/" title="autocomplete">autocomplete<sup>0</sup></a></li>
+		
+			<li><a href="/tags/django/" title="django">django<sup>1</sup></a></li>
+		
+			<li><a href="/tags/edgengram/" title="edgengram">edgengram<sup>1</sup></a></li>
+		
+			<li><a href="/tags/elasticsearch/" title="elasticsearch">elasticsearch<sup>1</sup></a></li>
+		
+			<li><a href="/tags/git/" title="git">git<sup>1</sup></a></li>
+		
+			<li><a href="/tags/github/" title="github">github<sup>1</sup></a></li>
+		
+			<li><a href="/tags/hexo/" title="hexo">hexo<sup>1</sup></a></li>
+		
+			<li><a href="/tags/java/" title="java">java<sup>3</sup></a></li>
+		
+			<li><a href="/tags/jdk/" title="jdk">jdk<sup>1</sup></a></li>
+		
+			<li><a href="/tags/ngram/" title="ngram">ngram<sup>1</sup></a></li>
+		
+			<li><a href="/tags/sort/" title="sort">sort<sup>1</sup></a></li>
+		
+			<li><a href="/tags/spring/" title="spring">spring<sup>1</sup></a></li>
+		
+			<li><a href="/tags/高并发/" title="高并发">高并发<sup>0</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<div class="social-font clearfix">
+		
+		
+		
+		
+		
+	</div>
+		<p class="copyright">Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/A-limon/pacman" target="_blank" title="Pacman">Pacman</a> © 2017 
+		
+		<a href="http://njucz.github.io" target="_blank" title="njuCZ">njuCZ</a>
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+  </body>
+</html>
